@@ -1,5 +1,6 @@
 package com.deucecoded.todosubmission;
 
+import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
@@ -30,10 +31,10 @@ public class TodoListActivity extends AppCompatActivity {
         itemsAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, items);
         itemListView.setAdapter(itemsAdapter);
 
-        setupViewClickListener();
+        setupViewClickListeners();
     }
 
-    public void setupViewClickListener() {
+    private void setupViewClickListeners() {
         itemListView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override
             public boolean onItemLongClick(AdapterView<?> adapterView, View view, int position, long l) {
@@ -44,6 +45,25 @@ public class TodoListActivity extends AppCompatActivity {
             }
         });
 
+        itemListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                Intent intent = new Intent(getApplicationContext(), EditItemActivity.class);
+                intent.putExtra(EditItemActivity.TODO_ITEM_KEY, items.get(i));
+                startActivityForResult(intent, i);
+            }
+        });
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (resultCode == RESULT_OK) {
+            String newValue = data.getStringExtra(EditItemActivity.TODO_ITEM_KEY);
+            items.remove(requestCode);
+            items.add(requestCode, newValue);
+            itemsAdapter.notifyDataSetChanged();
+            writeItems();
+        }
     }
 
     public void onAddItem(View v) {

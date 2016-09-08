@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">TodoSubmission</string>
+    <string name="save_btn_label">Save</string>
+    <string name="edit_item_header_label">Edit Item Below:</string>
+    <string name="new_item_hint_text">Enter a new item</string>
+    <string name="add_btn_label">Add Item</string>
 </resources>
