@@ -9,6 +9,8 @@ import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ListView;
 
+import com.deucecoded.todosubmission.db.DatabaseHandler;
+
 import org.apache.commons.io.FileUtils;
 
 import java.io.File;
@@ -20,11 +22,14 @@ public class TodoListActivity extends AppCompatActivity {
 
     private ListView itemListView;
     private List<String> items;
+    private List<TodoItem> todoItems;
     private ArrayAdapter<String> itemsAdapter;
+    private DatabaseHandler databaseHandler;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        databaseHandler = new DatabaseHandler(this);
         setContentView(R.layout.activity_todo_list);
         itemListView = (ListView) findViewById(R.id.lvItems);
         readItems();
@@ -68,12 +73,16 @@ public class TodoListActivity extends AppCompatActivity {
 
     public void onAddItem(View v) {
         EditText newItemEditText = (EditText) findViewById(R.id.etNewItem);
-        itemsAdapter.add(newItemEditText.getText().toString());
+        String itemText = newItemEditText.getText().toString();
+        databaseHandler.insertTodo(itemText);
+//        TodoItem todoItem = new TodoItem(todoId, itemText);
+        itemsAdapter.add(itemText);
         newItemEditText.setText("");
         writeItems();
     }
 
     private void readItems() {
+        todoItems = databaseHandler.retrieveTodos();
         File filesDir = getFilesDir();
         File todoFile = new File(filesDir, "todo.txt");
         try {
