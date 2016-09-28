@@ -1,8 +1,6 @@
 package com.deucecoded.todosubmission;
 
-import android.app.Application;
 import android.content.Context;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
@@ -10,9 +8,6 @@ import android.widget.TextView;
 
 import java.util.List;
 
-/**
- * Created by coleman on 9/19/16.
- */
 public class ItemAdapter extends BaseAdapter {
     private Context context;
     private List<TodoItem> itemList;
@@ -28,7 +23,7 @@ public class ItemAdapter extends BaseAdapter {
     }
 
     @Override
-    public Object getItem(int i) {
+    public TodoItem getItem(int i) {
         return itemList.get(i);
     }
 
@@ -47,6 +42,11 @@ public class ItemAdapter extends BaseAdapter {
 
     public void addItem(TodoItem item) {
         itemList.add(item);
+        notifyDataSetChanged();
+    }
+
+    public void deleteItem(int position) {
+        itemList.remove(position);
         notifyDataSetChanged();
     }
 }

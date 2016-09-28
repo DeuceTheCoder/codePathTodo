@@ -13,9 +13,6 @@ import com.deucecoded.todosubmission.TodoItem;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by coleman on 9/18/16.
- */
 public class DatabaseHandler extends SQLiteOpenHelper {
 
     private static final String TAG = DatabaseHandler.class.getSimpleName();
@@ -40,9 +37,8 @@ public class DatabaseHandler extends SQLiteOpenHelper {
     public long insertTodo(String text) {
         ContentValues contentValues = new ContentValues();
         contentValues.put(TodoTable.ITEM_TEXT, text);
-        long id = getWritableDatabase().insert(TodoTable.TABLE_NAME, null, contentValues);
 
-        return id;
+        return getWritableDatabase().insert(TodoTable.TABLE_NAME, null, contentValues);
     }
 
     public List<TodoItem> retrieveTodos() {
@@ -53,7 +49,7 @@ public class DatabaseHandler extends SQLiteOpenHelper {
                 new String[]{TodoTable._ID, TodoTable.ITEM_TEXT},
                 null, null, null, null, null);
 
-        while(query.moveToNext()) {
+        while (query.moveToNext()) {
             long id = query.getLong(query.getColumnIndex(TodoTable._ID));
             String text = query.getString(query.getColumnIndex(TodoTable.ITEM_TEXT));
 
@@ -61,7 +57,29 @@ public class DatabaseHandler extends SQLiteOpenHelper {
             items.add(todoItem);
         }
 
+        query.close();
+
         return items;
+    }
+
+    public boolean deleteTodo(Long todoId) {
+        SQLiteDatabase db = getWritableDatabase();
+        int delete = db.delete(TodoTable.TABLE_NAME, TodoTable._ID + "=?", new String[]{String.valueOf(todoId)});
+
+        return delete > 0;
+    }
+
+    public boolean updateTodo(TodoItem todoItem) {
+        SQLiteDatabase db = getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(TodoTable.ITEM_TEXT, todoItem.getText());
+        int updated = db.update(TodoTable.TABLE_NAME,
+                values,
+                TodoTable._ID + "=?",
+                new String[]{String.valueOf(todoItem.getItemId())}
+        );
+
+        return updated == 1;
     }
 
     public static class TodoTable implements BaseColumns {
@@ -70,7 +88,5 @@ public class DatabaseHandler extends SQLiteOpenHelper {
         public static String CREATE_TABLE = "CREATE TABLE " + TABLE_NAME +
                 "(" + _ID + " INTEGER PRIMARY KEY, " +
                 ITEM_TEXT + " TEXT);";
-        public static String queryTodos = "SELECT * FROM " + TABLE_NAME +
-                " ORDER BY " + _ID;
     }
 }

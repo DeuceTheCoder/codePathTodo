@@ -1,30 +1,22 @@
 package com.deucecoded.todosubmission;
 
 import android.content.Intent;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ListView;
 
 import com.deucecoded.todosubmission.db.DatabaseHandler;
 
-import org.apache.commons.io.FileUtils;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
 public class TodoListActivity extends AppCompatActivity {
 
     private ListView itemListView;
-    private List<String> items;
-    private List<TodoItem> todoItems;
-    private ArrayAdapter<String> itemsAdapter;
     private DatabaseHandler databaseHandler;
+    private ItemAdapter todoAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,9 +24,9 @@ public class TodoListActivity extends AppCompatActivity {
         databaseHandler = new DatabaseHandler(this);
         setContentView(R.layout.activity_todo_list);
         itemListView = (ListView) findViewById(R.id.lvItems);
-        readItems();
-        itemsAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, items);
-        itemListView.setAdapter(itemsAdapter);
+        loadListAdapter();
+
+        itemListView.setAdapter(todoAdapter);
 
         setupViewClickListeners();
     }
@@ -43,10 +35,10 @@ public class TodoListActivity extends AppCompatActivity {
         itemListView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override
             public boolean onItemLongClick(AdapterView<?> adapterView, View view, int position, long l) {
-                items.remove(position);
-                itemsAdapter.notifyDataSetChanged();
-                writeItems();
-                return true;
+                boolean removed = databaseHandler.deleteTodo(todoAdapter.getItem(position).getItemId());
+                todoAdapter.deleteItem(position);
+
+                return removed;
             }
         });
 
@@ -54,7 +46,8 @@ public class TodoListActivity extends AppCompatActivity {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
                 Intent intent = new Intent(getApplicationContext(), EditItemActivity.class);
-                intent.putExtra(EditItemActivity.TODO_ITEM_KEY, items.get(i));
+                TodoItem todoItem = todoAdapter.getItem(i);
+                intent.putExtra(EditItemActivity.TODO_ITEM_KEY, todoItem.getText());
                 startActivityForResult(intent, i);
             }
         });
@@ -64,42 +57,27 @@ public class TodoListActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (resultCode == RESULT_OK) {
             String newValue = data.getStringExtra(EditItemActivity.TODO_ITEM_KEY);
-            items.remove(requestCode);
-            items.add(requestCode, newValue);
-            itemsAdapter.notifyDataSetChanged();
-            writeItems();
+
+            TodoItem item = todoAdapter.getItem(requestCode);
+            item.setText(newValue);
+            databaseHandler.updateTodo(item);
+            todoAdapter.notifyDataSetChanged();
         }
     }
 
     public void onAddItem(View v) {
         EditText newItemEditText = (EditText) findViewById(R.id.etNewItem);
         String itemText = newItemEditText.getText().toString();
-        databaseHandler.insertTodo(itemText);
-//        TodoItem todoItem = new TodoItem(todoId, itemText);
-        itemsAdapter.add(itemText);
+
+        long todoId = databaseHandler.insertTodo(itemText);
+        TodoItem todoItem = new TodoItem(todoId, itemText);
+        todoAdapter.addItem(todoItem);
+
         newItemEditText.setText("");
-        writeItems();
     }
 
-    private void readItems() {
-        todoItems = databaseHandler.retrieveTodos();
-        File filesDir = getFilesDir();
-        File todoFile = new File(filesDir, "todo.txt");
-        try {
-            items = new ArrayList<>(FileUtils.readLines(todoFile));
-        } catch (IOException e) {
-            items = new ArrayList<>();
-        }
-    }
-
-    private void writeItems() {
-        File filesDir = getFilesDir();
-        File todoFile = new File(filesDir, "todo.txt");
-        try {
-            FileUtils.writeLines(todoFile, items);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
+    private void loadListAdapter() {
+        List<TodoItem> todoItems = databaseHandler.retrieveTodos();
+        todoAdapter = new ItemAdapter(this, todoItems);
     }
 }
